@@ -2,9 +2,10 @@ import React from 'react'
 import { withFormik, Form, Field } from "formik";
 import axios from "axios";
 import * as Yup from "yup";
+import Swal from 'sweetalert2'
 
 function BoardForm({ values, errors, touched, isSubmitting}) {
-  console.log('test 1 to see if it reaches to console log')
+  // console.log('values:', values)
   return (
     
     <Form>
@@ -41,10 +42,7 @@ function BoardForm({ values, errors, touched, isSubmitting}) {
 }
 
 const FormikBoardForm = withFormik({
-  
-  mapPropsToValues({ name,email, password,tos}) {
-    console.log('test 2 to see if it reaches to console log')
-
+  mapPropsToValues({ name,email, password, tos}) {
     return {
       name: name || "",
       email: email || "",
@@ -52,48 +50,50 @@ const FormikBoardForm = withFormik({
       tos: tos || false,
     };
   },
-
-  // ===== VALIDATION SCHEMA =======
-
   validationSchema: Yup.object().shape({
     name: Yup.string()
-      .min(3,"First Name should be at least 5 characters long")
-      .max(10)
-      .required('Name is required.'),
-    email:Yup.string()
-      .email('Email is NOT VALID')
-      .required('Email is required'),
-    password: Yup.string()
-       .min(8, 'Password must be 8 characters or longer')
-       .required('Password is required'),
-    checkbox: Yup.boolean()
-       .required('Must Agree to TOS')
+    .min(3,"First Name should be at least 5 characters long")
+    .max(10)
+    .required('Name is required.'),
+  email:Yup.string()
+    .email('Email is NOT VALID')
+    .required('Email is required'),
+  password: Yup.string()
+     .min(8, 'Password must be 8 characters or longer')
+     .required('Password is required'),
+  tos: Yup.boolean()
+     .oneOf([true], "Accept TOS to Continue")
+     .required()
   }),
-  //======END VALIDATION SCHEMA==========
-  handleSubmit(values, {resetForm, setErrors, setSubmitting}) {
-    console.log('test 3 to see if it reaches to console log')
+  handleSubmit(values, { resetForm, setErrors, setSubmitting }) {
     console.log(values)
-    if (values.email === 'waffle@syrup.com') {
-      setErrors({ email: 'That email is already taken' })
+    if (values.email === "alreadytaken@atb.dev") {
+      setErrors({ email: "That email is already taken" });
     } else {
+      axios
+        .post("https://reqres.in/api/users", values)
+        .then(res => {
+          console.log(res); // Data was created successfully and logs to console
+          // Swal.fire({
+          //   title: 'Good job!',
+          //   text: 'Do you want to continue',
+          //   type: 'success',
+          //   content: 'Submitted' + res.data,
+          //   confirmButtonText: 'Cool'
+          // })
+          window.alert(
+            "Form submitted " + "\n" +
+            'name:  ' + res.data.name + "\n" +
+            'email:  ' + res.data.email
 
-      let url = 'https://reqres.in/api/users'
-      console.log(url)
-      //THIS IS WHERE YOU DO YOUR FORM SUBMISSION CODE... HTTP REQUESTS, ETC.
-      axios.post('https://reqres.in/api/users', values)
-            .then(res => {
-              console.log(values)
-              console.log(res)
-              window.alert(
-                "Form submitted " + res.data
-              )
-                resetForm()
-                console.log(setSubmitting)
-                setSubmitting(false)
-            }).catch (err => {
-              console.log(err)
-              setSubmitting(false)
-            })
+          )
+          resetForm();
+          setSubmitting(false);
+        })
+        .catch(err => {
+          console.log(err); // There was an error creating the data and logs to console
+          setSubmitting(false);
+        });
     }
   }
 })(BoardForm);
