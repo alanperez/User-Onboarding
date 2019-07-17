@@ -3,8 +3,10 @@ import { withFormik, Form, Field } from "formik";
 import axios from "axios";
 import * as Yup from "yup";
 
-function BoardForm({ values, errors, touched}) {
+function BoardForm({ values, errors, touched, isSubmitting}) {
+  console.log('test 1 to see if it reaches to console log')
   return (
+    
     <Form>
      <div style={{margin: '50px auto'}}>
 
@@ -28,16 +30,21 @@ function BoardForm({ values, errors, touched}) {
       <Field type="checkbox" name="tos" checked={values.tos} />
         Accept the Terms of Service
       </label>
-      <button type='submit'>Submit!</button>
+      <div>
 
+      <button disabled={isSubmitting} type='submit'>Submit!</button>
+      </div>
+        
      </div>
     </Form>
   );
 }
 
 const FormikBoardForm = withFormik({
-  mapPropsToValues({ name,email, password,tos }) {
-    // console.log(FormikBoardForm)
+  
+  mapPropsToValues({ name,email, password,tos}) {
+    console.log('test 2 to see if it reaches to console log')
+
     return {
       name: name || "",
       email: email || "",
@@ -50,22 +57,44 @@ const FormikBoardForm = withFormik({
 
   validationSchema: Yup.object().shape({
     name: Yup.string()
+      .min(3,"First Name should be at least 5 characters long")
+      .max(10)
       .required('Name is required.'),
-
     email:Yup.string()
       .email('Email is NOT VALID')
       .required('Email is required'),
-
     password: Yup.string()
        .min(8, 'Password must be 8 characters or longer')
        .required('Password is required'),
-    checkbox: Yup.bool()
-      .required(' Must Agree to TOS')
+    checkbox: Yup.boolean()
+       .required('Must Agree to TOS')
   }),
   //======END VALIDATION SCHEMA==========
-  handleSubmit(values) {
-    console.log(values);
-    //THIS IS WHERE YOU DO YOUR FORM SUBMISSION CODE... HTTP REQUESTS, ETC.
+  handleSubmit(values, {resetForm, setErrors, setSubmitting}) {
+    console.log('test 3 to see if it reaches to console log')
+    console.log(values)
+    if (values.email === 'waffle@syrup.com') {
+      setErrors({ email: 'That email is already taken' })
+    } else {
+
+      let url = 'https://reqres.in/api/users'
+      console.log(url)
+      //THIS IS WHERE YOU DO YOUR FORM SUBMISSION CODE... HTTP REQUESTS, ETC.
+      axios.post('https://reqres.in/api/users', values)
+            .then(res => {
+              console.log(values)
+              console.log(res)
+              window.alert(
+                "Form submitted " + res.data
+              )
+                resetForm()
+                console.log(setSubmitting)
+                setSubmitting(false)
+            }).catch (err => {
+              console.log(err)
+              setSubmitting(false)
+            })
+    }
   }
 })(BoardForm);
 
